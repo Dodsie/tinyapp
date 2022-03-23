@@ -18,9 +18,18 @@ const generateRandomString = () => {
   return string;
 };
 
+const usersEmailAddressSearch = (email, userDatabase) => {
+  for (const user in userDatabase) {
+    if (userDatabase[user].email === email) {
+      return userDatabase[user].email;
+    }
+  }
+  return undefined;
+};
+
 // Users Object/Database.
 const users = {
-  "userRandomID": { id: "userRandomID", email: "user@example.come", password: "123" },
+  "userRandomID": { id: "userRandomID", email: "user@example.com", password: "123" },
   "user2RandomID": { id: "user2RandomID", email: "user2@example.com", password: "1234" }
 };
 
@@ -96,7 +105,22 @@ app.get("/register", (req,res) => {
 
 app.post("/register", (req, res) => {
   const id = generateRandomString();
-  users[id] = { id: id, email: req.body.email, password: req.body.password };
+  const candidateEmail = req.body.email;
+  const candidatePassword = req.body.password;
+  
+  if (!candidateEmail || !candidatePassword) {
+    res.statusCode = 400;
+    res.send("Error");
+    return;
+  }
+
+  if (candidateEmail === usersEmailAddressSearch(candidateEmail, users)) {
+    res.statusCode = 400;
+    res.send("Error email is the same");
+    return;
+  }
+
+  users[id] = { id: id, email: candidateEmail, password: candidatePassword};
   res.cookie("user_id", users[id].id);
   res.redirect("/urls");
 });
