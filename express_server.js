@@ -7,7 +7,6 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
-const req = require('express/lib/request');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 app.set("view engine", "ejs");
@@ -18,9 +17,8 @@ const generateRandomString = () => {
   let string = Math.random().toString(36).slice(7);
   return string;
 };
-const templateVars = {
-  username: req.cookies["username"],
-};
+
+
 // Database Variable
 
 const urlDatabase = {
@@ -80,6 +78,18 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     }
   }
 });
+
+
+//update
+app.post("/urls/:shortURL/update", (req,res) => {
+  console.log(req.body);
+  let shortURL = req.params.shortURL;
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect("/urls");
+});
+
+
+
 
 // login
 app.post("/login", (req, res) => {
