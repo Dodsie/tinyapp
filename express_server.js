@@ -1,4 +1,7 @@
-// app configuration
+/*
+Configurations
+Functions/Variables
+*/
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const app = express();
@@ -19,14 +22,15 @@ const templateVars = {
   username: req.cookies["username"],
 };
 // Database Variable
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
 
-// Browse Responses.
-//home page
+///////////////////////////////////////////////////////
+// Routing
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -35,12 +39,13 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
-// urls/new page, create a new shortUrl
+
+// urls/new page, create a new shortUrl page.
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-//
+// Submit form to shorten URL, Generates/adds URLs to URL DB.
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
@@ -48,23 +53,24 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-// this is adding the shortURL : longURL in object form rendering it within
+
+// short URL page, shows the longURL/shortURL(hyperlink to go to the site).
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
   res.render("urls_show", templateVars);
 });
 
-// response when requesting localhost:port/hello
+//Routing : hello page
 app.get("/hello", (req, res) => {
   res.send("<html><body> Hello <b> World</></body></html>\n");
 });
-//redirect to longURL when short URL is applied in the /u/:shortURL
+//Redirects to longURL. Ex.(/u/a4fcd2) --> http://www.google.com
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
 
-//delete
+//deletes URL from database, redirection to /urls page.
 app.post("/urls/:shortURL/delete", (req, res) => {
   let shortURL = req.params.shortURL;
   for (let url in urlDatabase) {
