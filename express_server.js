@@ -27,13 +27,8 @@ const urlDatabase = {
 };
 
 
-<<<<<<< HEAD
 ///////////////////////////////////////////////////////
 // Routing
-=======
-// Browse Responses.
-//reponse when home page is requested
->>>>>>> main
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -43,14 +38,11 @@ app.get("/urls", (req, res) => {
     username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 });
-<<<<<<< HEAD
 
 // urls/new page, create a new shortUrl page.
-=======
-// response to urls/new page renders page with urls.new.ejs.
->>>>>>> main
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { username: req.cookies["username"]};
+  res.render("urls_new", templateVars);
 });
 
 // Submit form to shorten URL, Generates/adds URLs to URL DB.
@@ -61,12 +53,8 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-<<<<<<< HEAD
 
 // short URL page, shows the longURL/shortURL(hyperlink to go to the site).
-=======
-//
->>>>>>> main
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
     username: req.cookies["username"]};
@@ -102,21 +90,6 @@ app.post("/urls/:shortURL/update", (req,res) => {
   res.redirect("/urls");
 });
   
-
-
-
-
-//update
-app.post("/urls/:shortURL/update", (req,res) => {
-  console.log(req.body);
-  let shortURL = req.params.shortURL;
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect("/urls");
-});
-
-
-
-
 // login
 app.post("/login", (req, res) => {
   res.cookie('username', req.body['username']);
