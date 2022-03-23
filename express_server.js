@@ -82,6 +82,12 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 });
 
+app.get("/register", (req,res) => {
+  console.log(res.body);
+  const templateVars = { username: req.cookies["username"] };
+  res.render("urls_register",templateVars);
+});
+
 //update
 app.post("/urls/:shortURL/update", (req,res) => {
   console.log(req.body);
