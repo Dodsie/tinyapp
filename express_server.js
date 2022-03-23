@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
+const { cookie } = require('express/lib/response');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 app.set("view engine", "ejs");
@@ -18,6 +19,11 @@ const generateRandomString = () => {
   return string;
 };
 
+// Users Object/Database.
+const users = {
+  "userRandomID": { id: "userRandomID", email: "user@example.come", password: "123" },
+  "user2RandomID": { id: "user2RandomID", email: "user2@example.com", password: "1234" }
+};
 
 // Database Variable
 
@@ -37,10 +43,12 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase,
     username: req.cookies["username"] };
   res.render("urls_index", templateVars);
+  console.log(users);
 });
 
 // urls/new page, create a new shortUrl page.
 app.get("/urls/new", (req, res) => {
+  console.log(users);
   const templateVars = { username: req.cookies["username"]};
   res.render("urls_new", templateVars);
 });
@@ -81,13 +89,18 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     }
   }
 });
-
+// register page
 app.get("/register", (req,res) => {
-  console.log(res.body);
   const templateVars = { username: req.cookies["username"] };
   res.render("urls_register",templateVars);
 });
 
+app.post("/register", (req, res) => {
+  const id = generateRandomString();
+  users[id] = { id: id, email: req.body.email, password: req.body.password };
+  res.cookie("id", users[id].id);
+  res.redirect("/urls");
+});
 //update
 app.post("/urls/:shortURL/update", (req,res) => {
   console.log(req.body);
@@ -108,8 +121,7 @@ app.post("/logout", (req, res) => {
   res.redirect('/urls');
 });
 
-
 // listens on port specified, returns a log when sucessfully listening.
 app.listen(PORT,() => {
-  console.log(`Example app listening on ${PORT}!`);
+  console.log(`Server is listening on ${PORT}!`);
 });
