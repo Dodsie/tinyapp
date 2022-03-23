@@ -19,16 +19,16 @@ const urlDatabase = {
 
 
 // Browse Responses.
-//home page
+//reponse when home page is requested
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
-// urls page
+// response to urls page/renders urlDatabase with EJS/Client side index file.
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
-// urls/new page, create a new shortUrl
+// response to urls/new page renders page with urls.new.ejs.
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
@@ -41,7 +41,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-// this is adding the shortURL : longURL in object form rendering it within
+//
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
   res.render("urls_show", templateVars);
@@ -67,6 +67,17 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     }
   }
 });
+
+//update
+app.post("/urls/:shortURL/update", (req,res) => {
+  console.log(req.body);
+  let shortURL = req.params.shortURL;
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect("/urls");
+});
+  
+
+
 
 
 
