@@ -35,6 +35,25 @@ const usersEmailAddressSearch = (email, userDatabase) => {
   }
   return undefined;
 };
+const urlsForUser = (userID, database) => {
+  const results = {};
+  for (let shortURL in database) {
+    if (database[shortURL].userID === userID) {
+      results[shortURL] = database[shortURL];
+    }
+  }
+  return results;
+};
+
+const findShortURL = (shortURL, database) => {
+  for (const URL in database) {
+    if (URL === shortURL) {
+      return shortURL;
+    }
+    return undefined;
+  }
+};
+
 
 // Users Object/Database.
 const users = {
@@ -57,10 +76,16 @@ app.get("/", (req, res) => {
 });
 // Routes urls to the urls page/ routes cookie information to the index/client side.
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, //<---
-    userObject: users[req.cookies.user_id] };
+  const userID = req.cookies.user_id;
+  if (!userID || !users[userID]) {
+    res.statusCode = 400;
+    res.send("<h2> Error : 400 <h2> <br> <h3> Must <a href='/login'>login</a> or  <a href='/register'>register</a> to view URLs</h3>");
+    return;
+  }
+  const usersURLs = urlsForUser(userID, urlDatabase);
+  const templateVars = { urls: usersURLs,
+    userObject: users[userID] };
   res.render("urls_index", templateVars);
-
 });
 
 //routing to urls/new
@@ -70,6 +95,7 @@ app.get("/urls/new", (req, res) => {
   }
   const templateVars = { userObject: users[req.cookies.user_id]};
   res.render("urls_new", templateVars);
+  
 });
 
 // Submit form to shorten URL, Generates/adds URLs to URL DB.
@@ -84,10 +110,40 @@ app.post("/urls", (req, res) => {
 
 // short URL page, shows the longURL/shortURL(hyperlink to go to the site).
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, //<----
-    userObject: users[req.cookies.user_id]};
+  const userID = req.cookies.user_id;
+  const shortURL = req.params.shortURL;
+  
+  if (!urlDatabase[shortURL]) {
+    res.statusCode = 400;
+    res.send("<h2> Error : 400 <h2> <br> <h3> This Short URL does NOT exist</h3>");
+    return;
+  }
+  const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL].longURL,
+    userObject: users[userID]};
   res.render("urls_show", templateVars);
+  
 });
+
+//update/edit existing shortURL with (edited) LongURL.
+app.post("/urls/:shortURL/update", (req,res) => {
+  const userID = req.cookies.user_id;
+  const shortURL = req.params.shortURL;
+
+  if (!userID || !users[userID]) {
+    res.statusCode = 400;
+    res.send("<h2> Error : 400 <h2> <br> <h3> Must <a href='/login'>login</a> or  <a href='/register'>register</a> to edit your URLs</h3>");
+    return;
+  }
+  if (userID !== urlDatabase[shortURL].userID) {
+    res.statusCode = 400;
+    res.send("<h2> Error : 400 <h2> <br> <h3> Cannot edit other users URLs </h3>");
+    return;
+  }
+  urlDatabase[shortURL].longURL = req.body.longURL;
+  res.redirect("/urls");
+});
+
+
 
 //Routing : hello page
 app.get("/hello", (req, res) => {
@@ -96,21 +152,34 @@ app.get("/hello", (req, res) => {
 //Redirects to longURL. Ex.(/u/a4fcd2) --> http://www.google.com
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  if (!urlDatabase[shortURL]) {  //for in loop?
+  if (!urlDatabase[shortURL]) {
     res.statusCode = 400;
     res.send("<h2> Error : 400 <h2> <br> <h3> This Short URL does NOT exist</h3>");
     return;
-  } else {
-    const longURL = urlDatabase[shortURL].longURL;
-    res.redirect(longURL);
-    
   }
+  const longURL = urlDatabase[shortURL].longURL;
+  res.redirect(longURL);
+    
+  
   
 });
 
 //deletes URL from database, redirection to /urls page.
 app.post("/urls/:shortURL/delete", (req, res) => {
   let shortURL = req.params.shortURL;
+  const userID = req.cookies.user_id;
+
+  if (!userID || !users[userID]) {
+    res.statusCode = 400;
+    res.send("<h2> Error : 400 <h2> <br> <h3> Must <a href='/login'>login</a> or  <a href='/register'>register</a> to delete your URLs</h3>");
+    return;
+  }
+  if (userID !== urlDatabase[shortURL].userID) {
+    res.statusCode = 400;
+    res.send("<h2> Error : 400 <h2> <br> <h3> Cannot delete other users URLs </h3>");
+    return;
+  }
+
   for (let url in urlDatabase) {
     if (url === shortURL) {
       delete urlDatabase[shortURL]; // <---
@@ -163,7 +232,7 @@ app.post("/login", (req, res) => {
   const passwordCheck = usersPasswordSearch(candidatePassword, users);
   if (candidateEmail !== emailCheck) {
     res.statusCode = 403;
-    res.send("Email is not registered!");
+    res.send("<h2> Error : 400 <h2> <br> <h3> Must be <a href='/register'>registered</a> to login</h3>");
     return;
   } if (candidateEmail === emailCheck && candidatePassword !== passwordCheck) {
     res.statusCode = 403;
@@ -178,12 +247,6 @@ app.post("/login", (req, res) => {
 });
 
 
-//update/edit existing shortURL with (edited) LongURL.
-app.post("/urls/:shortURL/update", (req,res) => {
-  let shortURL = req.params.shortURL;
-  urlDatabase[shortURL].longURL = req.body.longURL;
-  res.redirect("/urls");
-});
   
 //logout will clear cookies on the current session matiching user_id.
 app.post("/logout", (req, res) => {
@@ -192,6 +255,6 @@ app.post("/logout", (req, res) => {
 });
 
 // listens on port specified, returns a log when/where sucessfully listening.
-app.listen(PORT,() => {
+app.listen(PORT, () => {
   console.log(`Server is listening on ${PORT}!`);
 });
