@@ -45,14 +45,6 @@ const urlsForUser = (userID, database) => {
   return results;
 };
 
-const findShortURL = (shortURL, database) => {
-  for (const URL in database) {
-    if (URL === shortURL) {
-      return shortURL;
-    }
-    return undefined;
-  }
-};
 
 
 // Users Object/Database.
@@ -72,14 +64,19 @@ const urlDatabase = {
 ///////////////////////////////////////////////////////
 // Routing
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  const userID = req.cookies.user_id;
+  if (!userID) {
+    res.redirect("/login");
+    return;
+  }
+  res.redirect('/urls');
 });
 // Routes urls to the urls page/ routes cookie information to the index/client side.
 app.get("/urls", (req, res) => {
   const userID = req.cookies.user_id;
   if (!userID || !users[userID]) {
     res.statusCode = 400;
-    res.send("<h2> Error : 400 <h2> <br> <h3> Must <a href='/login'>login</a> or  <a href='/register'>register</a> to view URLs</h3>");
+    res.send("<h2> Error : 400 <h2> <br> <h3> Must <a href='/login'>login</a> or  <a href='/register'>register</a> to view/create URLs</h3>");
     return;
   }
   const usersURLs = urlsForUser(userID, urlDatabase);
@@ -90,7 +87,8 @@ app.get("/urls", (req, res) => {
 
 //routing to urls/new
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies.user_id) {
+  const userID = req.cookies.user_id;
+  if (!userID) {
     res.redirect('/login');
   }
   const templateVars = { userObject: users[req.cookies.user_id]};
@@ -113,9 +111,19 @@ app.get("/urls/:shortURL", (req, res) => {
   const userID = req.cookies.user_id;
   const shortURL = req.params.shortURL;
   
+  if (!userID || !users[userID]) {
+    res.statusCode = 400;
+    res.send("<h2> Error : 400 <h2> <br> <h3> Must <a href='/login'>login</a> or  <a href='/register'>register</a> to access URLs</h3>");
+    return;
+  }
   if (!urlDatabase[shortURL]) {
     res.statusCode = 400;
     res.send("<h2> Error : 400 <h2> <br> <h3> This Short URL does NOT exist</h3>");
+    return;
+  }
+  if (userID !== urlDatabase[shortURL].userID) {
+    res.statusCode = 400;
+    res.send("<h2> Error : 400 <h2> <br> <h3> This ShortURL does not exist in your URLs library </h3>");
     return;
   }
   const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL].longURL,
