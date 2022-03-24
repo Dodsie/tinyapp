@@ -2,6 +2,7 @@
 Configurations
 Functions/Variables
 */
+const bcrypt = require('bcryptjs');
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const app = express();
@@ -12,20 +13,21 @@ app.use(cookieParser());
 app.set("view engine", "ejs");
 
 
+
 //functions.
 const generateRandomString = () => {
   let string = Math.random().toString(36).slice(7);
   return string;
 };
 
-const usersPasswordSearch = (password, userDatabase) => {
-  for (const user in userDatabase) {
-    if (userDatabase[user].password === password) {
-      return userDatabase[user].password;
-    }
-  }
-  return undefined;
-};
+// const usersPasswordSearch = (password, userDatabase) => {
+//   for (const user in userDatabase) {
+//     if (userDatabase[user].password === password) {
+//       return userDatabase[user].password;
+//     }
+//   }
+//   return undefined;
+// };
 
 const usersEmailAddressSearch = (email, userDatabase) => {
   for (const user in userDatabase) {
@@ -45,12 +47,20 @@ const urlsForUser = (userID, database) => {
   return results;
 };
 
+const fetchUserDataFromEmail = (candidateEmail, users) => {
+  let results = {};
+  for (let user in users) {
+    if (users[user].email === candidateEmail) {
+      return results = users[user];
+    }
+  }
+  return undefined;
+};
 
 
 // Users Object/Database.
 const users = {
-  "userRandomID": { id: "userRandomID", email: "user@example.com", password: "123" },
-  "user2RandomID": { id: "user2RandomID", email: "user2@example.com", password: "1234" }
+  
 };
 
 // Database Variable
@@ -190,7 +200,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
   for (let url in urlDatabase) {
     if (url === shortURL) {
-      delete urlDatabase[shortURL]; // <---
+      delete urlDatabase[shortURL];
       res.redirect("/urls");
     }
   }
@@ -205,7 +215,7 @@ app.post("/register", (req, res) => {
   const id = generateRandomString();
   const candidateEmail = req.body.email;
   const candidatePassword = req.body.password;
-  
+  const hashedPassword = bcrypt.hashSync(candidatePassword, 10); // <---
   if (!candidateEmail || !candidatePassword) {
     res.statusCode = 400;
     res.send("<h2> Error : 400 <h2> <br> <h3> Username/Password Fields must NOT be empty.</h3>");
@@ -218,7 +228,7 @@ app.post("/register", (req, res) => {
     return;
   }
 
-  users[id] = { id: id, email: candidateEmail, password: candidatePassword};
+  users[id] = { id: id, email: candidateEmail, password: hashedPassword}; // <---
   res.cookie("user_id", users[id].id);
   res.redirect("/urls");
 });
@@ -237,16 +247,16 @@ app.post("/login", (req, res) => {
   const candidateEmail = req.body.email;
   const candidatePassword = req.body.password;
   const emailCheck = usersEmailAddressSearch(candidateEmail, users);
-  const passwordCheck = usersPasswordSearch(candidatePassword, users);
+  const user = fetchUserDataFromEmail(candidateEmail, users);
   if (candidateEmail !== emailCheck) {
     res.statusCode = 403;
     res.send("<h2> Error : 400 <h2> <br> <h3> Must be <a href='/register'>registered</a> to login</h3>");
     return;
-  } if (candidateEmail === emailCheck && candidatePassword !== passwordCheck) {
+  } if (!bcrypt.compareSync(candidatePassword, user.password)) { // <--
     res.statusCode = 403;
     res.send("Password invalid");
     return;
-  } if (candidateEmail === emailCheck && candidatePassword === passwordCheck) {
+  } if (bcrypt.compareSync(candidatePassword, user.password)) { // <--
     for (let user in users) {
       res.cookie("user_id", users[user].id);
     }
