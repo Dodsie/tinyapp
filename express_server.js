@@ -45,8 +45,8 @@ const users = {
 // Database Variable
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID",  },
+  "9sm5xK": { longURL: "http://www.google.com", userID: "user2RandomID" } // <---
 };
 
 
@@ -57,14 +57,17 @@ app.get("/", (req, res) => {
 });
 // Routes urls to the urls page/ routes cookie information to the index/client side.
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase,
+  const templateVars = { urls: urlDatabase, //<---
     userObject: users[req.cookies.user_id] };
   res.render("urls_index", templateVars);
+
 });
 
 //routing to urls/new
 app.get("/urls/new", (req, res) => {
-  console.log(users);
+  if (!req.cookies.user_id) {
+    res.redirect('/login');
+  }
   const templateVars = { userObject: users[req.cookies.user_id]};
   res.render("urls_new", templateVars);
 });
@@ -73,14 +76,15 @@ app.get("/urls/new", (req, res) => {
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = longURL;
+  const userIdentifier = req.cookies.user_id;
+  urlDatabase[shortURL] = {longURL: longURL, userID: userIdentifier}; // <---
   res.redirect(`/urls/${shortURL}`);
 });
 
 
 // short URL page, shows the longURL/shortURL(hyperlink to go to the site).
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, //<----
     userObject: users[req.cookies.user_id]};
   res.render("urls_show", templateVars);
 });
@@ -91,8 +95,17 @@ app.get("/hello", (req, res) => {
 });
 //Redirects to longURL. Ex.(/u/a4fcd2) --> http://www.google.com
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+  const shortURL = req.params.shortURL;
+  if (!urlDatabase[shortURL]) {  //for in loop?
+    res.statusCode = 400;
+    res.send("<h2> Error : 400 <h2> <br> <h3> This Short URL does NOT exist</h3>");
+    return;
+  } else {
+    const longURL = urlDatabase[shortURL].longURL;
+    res.redirect(longURL);
+    
+  }
+  
 });
 
 //deletes URL from database, redirection to /urls page.
@@ -100,7 +113,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   let shortURL = req.params.shortURL;
   for (let url in urlDatabase) {
     if (url === shortURL) {
-      delete urlDatabase[shortURL];
+      delete urlDatabase[shortURL]; // <---
       res.redirect("/urls");
     }
   }
@@ -135,6 +148,9 @@ app.post("/register", (req, res) => {
 
 //login
 app.get("/login", (req, res) => {
+  if (req.cookies.user_id) {
+    res.redirect('/urls');
+  }
   const templateVars = { userObject: users[req.cookies.user_id] };
   res.render("urls_login",templateVars);
 });
@@ -164,9 +180,8 @@ app.post("/login", (req, res) => {
 
 //update/edit existing shortURL with (edited) LongURL.
 app.post("/urls/:shortURL/update", (req,res) => {
-  console.log(req.body);
   let shortURL = req.params.shortURL;
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL].longURL = req.body.longURL;
   res.redirect("/urls");
 });
   
