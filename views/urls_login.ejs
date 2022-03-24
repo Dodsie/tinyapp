@@ -10,20 +10,16 @@
 <body>
   <%- include('partials/_header') %>
   <main style="margin: 1em;">
-    <h2>Create Account</h2>
-    <form class="form-inline" action="/register" method="POST">
-      <table>
-      <tr>
-        <div class="form-group mb-2"></div>
-        <td><label for="email">Email Address:</label></td>
-        <td><input class="form-control" id="email" type="email" name="email" placeholder="email" style="width: 300px; margin: 1em"></td> 
-        <td> <label for="password">Password:</label></td>
-        <td><input class="form-control" id="password" type="password" name="password" placeholder="password" style="width: 300px; margin: 1em"></td>
-        <td><button type="submit" class="btn btn-primary">Register</button></td>
-      </tr>
-    </table>
+    <h2>Login</h2>
+    <form class="form-inline" action="/login" method="POST">
+      <div class="form-group mb-2">
+        <label for="email">Email:</label>
+        <input class="form-control" id="email" type="email" name="email" placeholder="email" style="width: 300px; margin: 1em">
+        <label for="password">Password:</label>
+        <input class="form-control" id="password" type="password" name="password" placeholder="password" style="width: 300px; margin: 1em">
+        <button type="submit" class="btn btn-primary">Login</button>
+      </div>
     </form>
-
 
   <!-- Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

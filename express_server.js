@@ -12,10 +12,19 @@ app.use(cookieParser());
 app.set("view engine", "ejs");
 
 
-//functon for generating new string.
+//functions.
 const generateRandomString = () => {
   let string = Math.random().toString(36).slice(7);
   return string;
+};
+
+const usersPasswordSearch = (password, userDatabase) => {
+  for (const user in userDatabase) {
+    if (userDatabase[user].password === password) {
+      return userDatabase[user].password;
+    }
+  }
+  return undefined;
 };
 
 const usersEmailAddressSearch = (email, userDatabase) => {
@@ -46,15 +55,14 @@ const urlDatabase = {
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
-// response to urls page/renders urlDatabase with EJS/Client side index file.
+// Routes urls to the urls page/ routes cookie information to the index/client side.
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase,
     userObject: users[req.cookies.user_id] };
   res.render("urls_index", templateVars);
-  console.log(users);
 });
 
-// urls/new page, create a new shortUrl page.
+//routing to urls/new
 app.get("/urls/new", (req, res) => {
   console.log(users);
   const templateVars = { userObject: users[req.cookies.user_id]};
@@ -102,7 +110,7 @@ app.get("/register", (req,res) => {
   const templateVars = { userObject: users[req.cookies.user_id] };
   res.render("urls_register",templateVars);
 });
-
+// register post with conditions
 app.post("/register", (req, res) => {
   const id = generateRandomString();
   const candidateEmail = req.body.email;
@@ -110,13 +118,13 @@ app.post("/register", (req, res) => {
   
   if (!candidateEmail || !candidatePassword) {
     res.statusCode = 400;
-    res.send("Error");
+    res.send("<h2> Error : 400 <h2> <br> <h3> Username/Password Fields must NOT be empty.</h3>");
     return;
   }
 
   if (candidateEmail === usersEmailAddressSearch(candidateEmail, users)) {
     res.statusCode = 400;
-    res.send("Error email is the same");
+    res.send("<h2> Error : 400 <h2> <br> <h3> This email is already in use. Please Login.</h3>");
     return;
   }
 
@@ -124,7 +132,37 @@ app.post("/register", (req, res) => {
   res.cookie("user_id", users[id].id);
   res.redirect("/urls");
 });
-//update
+
+//login
+app.get("/login", (req, res) => {
+  const templateVars = { userObject: users[req.cookies.user_id] };
+  res.render("urls_login",templateVars);
+});
+
+// login post with conditions
+app.post("/login", (req, res) => {
+  const candidateEmail = req.body.email;
+  const candidatePassword = req.body.password;
+  const emailCheck = usersEmailAddressSearch(candidateEmail, users);
+  const passwordCheck = usersPasswordSearch(candidatePassword, users);
+  if (candidateEmail !== emailCheck) {
+    res.statusCode = 403;
+    res.send("Email is not registered!");
+    return;
+  } if (candidateEmail === emailCheck && candidatePassword !== passwordCheck) {
+    res.statusCode = 403;
+    res.send("Password invalid");
+    return;
+  } if (candidateEmail === emailCheck && candidatePassword === passwordCheck) {
+    for (let user in users) {
+      res.cookie("user_id", users[user].id);
+    }
+    res.redirect("/urls");
+  }
+});
+
+
+//update/edit existing shortURL with (edited) LongURL.
 app.post("/urls/:shortURL/update", (req,res) => {
   console.log(req.body);
   let shortURL = req.params.shortURL;
@@ -132,19 +170,13 @@ app.post("/urls/:shortURL/update", (req,res) => {
   res.redirect("/urls");
 });
   
-// login
-app.post("/login", (req, res) => {
-  res.cookie('username', req.body['username']);
-  res.redirect("/urls");
-});
-
-//logout
+//logout will clear cookies on the current session matiching user_id.
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
-// listens on port specified, returns a log when sucessfully listening.
+// listens on port specified, returns a log when/where sucessfully listening.
 app.listen(PORT,() => {
   console.log(`Server is listening on ${PORT}!`);
 });

@@ -12,14 +12,17 @@
           </div>
         </div>
         <% if(!userObject){ %>
-        <form method="POST" action="/login">  
-        <input name="username" placeholder="Username" type="text"> <button class="btn btn-primary" type="submit">Submit</button>
-      </form>
-      
+          <form method="GET" action="/login">
+            <button>Login</button>
+          </form>
+          <div>
+          <form method="GET" action="/register">
+            <button>Register</button>
+          </form>
       <% } else{ %>
         <form method="POST" action="/logout">
-          Logged in as: <%= userObject.email %>
-          <button class="btn btn-danger" type="submit">Logout</button>
+          Logged In As: <%= userObject.email %>
+          <button class="btn btn-primary">Logout</button>
         </form>
         <% } %>
       </div>
