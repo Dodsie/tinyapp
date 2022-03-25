@@ -5,8 +5,9 @@ Enjoy!
 
 ## Final Product
 
-!["screenshot description"](#)
-!["screenshot description"](#)
+!["Register-Page!"](https://github.com/Dodsie/tinyapp/blob/main/docs/register-page-:register.png?raw=true)
+!["URLs-Page!"](https://github.com/Dodsie/tinyapp/blob/main/docs/urls-page-:urls.png?raw=true)
+!["Edit-Page!"](https://github.com/Dodsie/tinyapp/blob/main/docs/edit-page%20-%20:urls:shortURL.png?raw=true)
 
 ## Dependencies
 
